@@ -167,8 +167,8 @@ A DICTIONARY is implemented as a MIXED_ARRAY contains two elements, both of whic
 
 # Implementations
 
-ion is portable not just machine architectures, but also programming languages.
+ion is portable not just across machine architectures, but also programming languages.
 
 - [ion-swift](https://github.com/OperatorFoundation/ion-swift) - Swift 5.9
-- [iota-cpp](https://github.com/blanu/iota-cpp) - ion is included inside the iota implementation for C++17 for both Arduino cores and desktop operating systems
+- [iota-cpp](https://github.com/OperatorFoundation/ion-cpp) - C++17 for both Arduino cores and desktop operating systems
 - [iota-python](https://github.com/blanu/iota-python) - ion is include inside the iota implementation for CircuitPython for both Arduino cores and desktop operating systems
