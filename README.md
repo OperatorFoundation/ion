@@ -14,13 +14,15 @@ ion supports one universal data type, with several subtypes.
 
 Every ion data structure is of type Storage.
 
-Every Storage has a StorageType, of which there are 5 options:
+Every Storage has a StorageType, of which there are the following options:
 
 - WORD (0)
 - FLOAT (1)
 - WORD_ARRAY (2)
 - FLOAT_ARRAY (3)
 - MIXED_ARRAY (4)
+- BYTE (5)
+- BYTE_ARRAY (6)
 
 Every Storage has a NounType, which is represented by an integer.
 
@@ -31,6 +33,8 @@ Every Storage has a value, of which there are five subtypes mapping onto the Sto
 - WORD_ARRAY - an unboxed list of words
 - FLOAT_ARRAY - an unboxed list of floats
 - MIXED_ARRAY - a boxed, mixed-type list of any Storage types
+- BYTE - an unsigned 8-bit integer
+- BYTE_ARRAY - an unboxed list of bytes
 
 Taken altogether, every ion data structure is a tuple of (StorageType, NounType, value).
 
@@ -42,7 +46,7 @@ Each Storage has a NounType, which is an integer. Arbitrary noun types can be de
 - REAL (1) - a floating point number stands in awkwardly for a real number
 - CHARACTER (2) - a Unicode character
 - STRING (3) - a Unicode string
-- LIST (4) - a general-purpose list, which could be specialized into a WORD_ARRAY, FLOAT_ARRAY, or MIXED_ARRAY
+- LIST (4) - a general-purpose list, which could be specialized into a BYTE_ARRAY, WORD_ARRAY, FLOAT_ARRAY, or MIXED_ARRAY
 - DICTIONARY (5) - a mapping from Storage keys to Storage values
 
 The StorageType determines the type of value. A WORD will always be accompanied by a machine word. However, the NounType determines how that value is interpreted. For instance, a WORD could be either an INTEGER or a CHARACTER.
@@ -169,7 +173,25 @@ Let's break it down one group at a time:
 - (1,3) - the first element of the second subarray is 3
 - (1,4) - the second element of the second subarray is 4
 
-### Encoding Noun Values
+#### BYTE
+
+A byte is represented by a byte. Here is an ion data structure with a StorageType of BYTE (5), a NounType of INTEGER (0), and a value of 7:
+
+```
+5 0 7
+```
+
+#### BYTE_ARRAY
+
+An array of bytes is represented by a squeezed integer specifying how many items are in the list, followed by a byte for each of those items. Here is the byte array list [3, 4]:
+
+```
+6 4 1 2 3 4
+```
+
+First we have a StorageType 6 for BYTE_ARRAY and a NounType 4 for LIST. Then we have a squeezed length "1 2", specifying 1 byte is used for the length, and the length specified is 2, meaning that there are 2 words in the list. Then we have two bytes "3 4". Please note that the individual bytes are unboxed. They do not carry StorageType and NounType information, just the array itself does.
+
+#### Encoding Noun Values
 
 Most of the work of encoding is done using just the StorageType. The NounType mainly comes into play in the interpretation of the value. For instance, if you are deserialzing it into a native type for a specific programming language, then the difference between a WORD that is an INTEGER and a WORD that is a CHARACTER are of interest. However, there are a few notes to consider about how to encode specific nouns.
 
@@ -193,7 +215,7 @@ Just as a CHARACTER is a WORD in ion, a STRING of characters is a WORD_ARRAY. On
 
 #### LIST
 
-There are three types of lists: WORD_ARRAY for unboxed machine words, FLOAT_ARRAY for unboxed floating point numbers of a machine-specific size, and MIXED_ARRAY for general-purpose boxed arrays. The terms "boxed" and "unboxed" here refer to whether or not individual elements carry type information. A WORD_ARRAY can only contain WORD values and a FLOAT_ARRAY can only contain FLOAT values. If more nuanced typing is needed, then a MIXED_ARRAY provides types for each element. A MIXED_ARRAY is also the only way to have a list of lists.
+There are four types of lists: BYTE_ARRAY for unboxed bytes, WORD_ARRAY for unboxed machine words, FLOAT_ARRAY for unboxed floating point numbers of a machine-specific size, and MIXED_ARRAY for general-purpose boxed arrays. The terms "boxed" and "unboxed" here refer to whether or not individual elements carry type information. A BYTE_ARRAY can only contain bytes, a WORD_ARRAY can only contain WORD values, and a FLOAT_ARRAY can only contain FLOAT values. If more nuanced typing is needed, then a MIXED_ARRAY provides types for each element. A MIXED_ARRAY is also the only way to have a list of lists.
 
 #### DICTIONARY
 
@@ -203,7 +225,7 @@ A DICTIONARY is implemented as a MIXED_ARRAY contains two elements, both of whic
 
 ion is portable not just across machine architectures, but also programming languages.
 
-- [iota-cpp](https://github.com/OperatorFoundation/ion-cpp) - C++17 for both Arduino cores and desktop operating systems
+- [iota-cpp](https://curiosas.eu/OperatorFoundation/ion-cpp) - C++17 for both Arduino cores and desktop operating systems
 - [ion-swift](https://github.com/OperatorFoundation/ion-swift) - Swift 5.9
 - [iota-python](https://github.com/blanu/iota-python) - ion is included inside the iota implementation for CircuitPython for both Arduino cores and desktop operating systems
 
@@ -225,8 +247,6 @@ The primary use case of interest for this project is communication between diver
 
 - FLOAT values of additional sizes
 - STRING value alternative that uses a MIXED_ARRAY of WORD_ARRAY values to represent grapheme clusters directly
-- byte arrays as a WORD_ARRAY and a count of how many bytes are actually used (or unused)
-    - This could be extended to other sub-word array types, such as int16, etc.
 - multi-arrays, which is to say the semantics of a single list, but a representation as a MIXED_ARRAY of LIST values, for very large lists
 - slices of an array (offset and length)
 - bit arrays
